@@ -120,7 +120,8 @@ fn unravel_shorthand(shorthand_expression: &[char]) -> ParseResult<Vec<String>> 
     Ok(expanded)
 }
 
-// Unravels shorthand at index and expands to different rows corresponding to the different available labels
+// Unravels shorthand at index and expands to different rows corresponding to
+// the different available labels
 fn expand_at_index(row: &[String], index: usize) -> ParseResult<Vec<Vec<String>>> {
     row.get(index)
         .ok_or("Index somehow out of range.".to_string())

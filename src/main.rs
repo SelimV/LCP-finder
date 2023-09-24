@@ -1,5 +1,9 @@
-use crate::parse_input::{print_parsed_input, read_input_file, simplify_parsed_input};
+use crate::{
+    lcp_finding_algorithm::find_lcp,
+    parse_input::{print_parsed_input, read_input_file, simplify_parsed_input},
+};
 
+mod lcp_finding_algorithm;
 mod parse_input;
 
 fn main() {
@@ -17,4 +21,27 @@ fn main() {
     print_parsed_input(&active_target);
     println!("passive_target");
     print_parsed_input(&passive_target);
+
+    println!("-----------------------------------------------------------------------------------------\n\n\n");
+
+    if let Some(found_lcp_map) = find_lcp(
+        &active_source,
+        &passive_source,
+        &active_target,
+        &passive_target,
+    ) {
+        println!("An LCP-map can be constructed from the following map on representatives:");
+        for (key, value) in found_lcp_map {
+            for label in key {
+                print!("{label} ");
+            }
+            print!("  ->   ");
+            for label in value {
+                print!("{label} ");
+            }
+            println!();
+        }
+    } else {
+        println!("No LCP-maps exist from source problem to target.");
+    }
 }

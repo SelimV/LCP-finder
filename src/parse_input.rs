@@ -11,6 +11,7 @@ pub(super) fn read_input_file(file_name: &str) -> ParseResult<Vec<Vec<String>>> 
         })
 }
 
+// Sorts the input for easier comparison and removes duplicates
 pub(super) fn simplify_parsed_input(mut parsed_input: Vec<Vec<String>>) -> Vec<Vec<String>> {
     parsed_input.iter_mut().for_each(|row| row.sort_unstable());
     parsed_input.sort_unstable();

@@ -56,7 +56,7 @@ fn check(
             let index_of_addition_target = configuration.binary_search(addition_target).ok();
             index_of_addition_target.map(|index| {
                 let mut configuration = configuration.clone();
-                // Preserve order for source configurations, hence no swap remove
+                // Preserve order for target configurations, hence no swap remove
                 configuration.remove(index);
                 configuration
             })
@@ -100,6 +100,12 @@ fn check(
     }
 }
 
+/// Checks whether the remaining active source configurations can be mapped
+/// given the current relation while preserving compatibility, by trying all
+/// remaining ways to complete a permutation of the selected target
+/// configuration, which the current active source configuration will be mapped
+/// to. Assumes that the input relation is compatible and the configurations
+/// sorted.
 fn try_permutations(
     relation: &Relation,
     passive_source: &HashSet<Vec<Label>>,
@@ -110,6 +116,8 @@ fn try_permutations(
     passive_degree: &usize,
 ) -> Option<(LCPMap, Vec<Label>)> {
     if remaining_labels_in_selected_target_configuration.is_empty() {
+        // The permutation has been completed, continue with the next remaining active
+        // source configuration
         let mut active_source_remaining = Vec::from(active_source_remaining);
         active_source_remaining.pop();
         return try_configurations(
@@ -126,6 +134,8 @@ fn try_permutations(
     let addition_source = &active_source_remaining.last().unwrap()
         [remaining_labels_in_selected_target_configuration.len() - 1];
 
+    // Try all the remaining target labels for the current label of the current
+    // active source configuration
     for index in 0..remaining_labels_in_selected_target_configuration.len() {
         let addition_target = &remaining_labels_in_selected_target_configuration[index];
 
@@ -141,6 +151,7 @@ fn try_permutations(
                 remaining_labels_in_selected_target_configuration.clone();
             remaining_labels_in_selected_target_configuration.remove(index);
             let found_map_extension = if let Some(relation_with_addition) = relation_with_addition {
+                // Continue to the next source label with the expanded relation
                 try_permutations(
                     &relation_with_addition,
                     passive_source,
@@ -151,6 +162,7 @@ fn try_permutations(
                     passive_degree,
                 )
             } else {
+                // Reuse the unchanged relation
                 try_permutations(
                     relation,
                     passive_source,
@@ -163,15 +175,20 @@ fn try_permutations(
             };
 
             if let Some((map, mut partial_permutation)) = found_map_extension {
+                // Add the current label pair to the partial solution
                 partial_permutation.push(addition_target.clone());
                 return Some((map, partial_permutation));
             }
         }
     }
-
+    // None of the available permutations work
     None
 }
 
+/// Checks whether the remaining active source configurations can be mapped
+/// given the current relation while preserving compatibility, by trying all
+/// active target configurations for the next active source configuration.
+/// Assumes that the input relation is compatible and the configurations sorted.
 fn try_configurations(
     relation: &Relation,
     passive_source: &HashSet<Vec<Label>>,
@@ -181,7 +198,8 @@ fn try_configurations(
     passive_degree: &usize,
 ) -> Option<LCPMap> {
     if active_source_remaining.is_empty() {
-        println!("{:?}",relation);
+        // All active source configurations have been mapped
+        println!("Final relation:\n{:?}", relation);
         return Some(LCPMap::new());
     }
     for selected_target_configuration in active_target {
@@ -194,13 +212,18 @@ fn try_configurations(
             selected_target_configuration,
             passive_degree,
         ) {
+            // Found an LCP-map, add the current configuration pair to the partial result
             map.insert(active_source_remaining.last().unwrap().clone(), permutation);
             return Some(map);
         }
     }
+    // None of the active target configurations work
     None
 }
 
+/// If an LCP-map between the problems exists, finds a map on representatives
+/// which can be completed into an LCP-map using permutations. If no LCP-map
+/// exists, returns None. Assumes that the configurations are sorted.
 pub fn find_lcp(
     active_source: &[Vec<Label>],
     passive_source: &[Vec<Label>],
